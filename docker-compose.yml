@@ -1,0 +1,24 @@
+services:
+  db:
+    image: postgres:17-alpine
+    environment:
+      POSTGRES_USER: billing
+      POSTGRES_PASSWORD: billing
+      POSTGRES_DB: billing
+    ports: ["5432:5432"]
+    volumes:
+      - ./migrations:/docker-entrypoint-initdb.d:ro
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U billing"]
+      interval: 2s
+      retries: 20
+
+  api:
+    build: .
+    env_file: .env
+    environment:
+      DATABASE_URL: postgres://billing:billing@db:5432/billing?sslmode=disable
+    ports: ["8080:8080"]
+    depends_on:
+      db:
+        condition: service_healthy
